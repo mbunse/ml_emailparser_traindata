@@ -7,7 +7,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-
+import Radio from '@material-ui/core/Radio';
 const styles = {
   root: {
     width: '100%',
@@ -19,52 +19,74 @@ const styles = {
 };
 
 let id = 0;
-function createData(name, calories, fat, carbs, protein) {
+function createData(text, linetype) {
   id += 1;
-  return { id, name, calories, fat, carbs, protein };
+  return { id, text, linetype };
 }
 
 const data = [
-  createData('Frozen yoghurt', 159, 6.0, 24, 4.0),
-  createData('Ice cream sandwich', 237, 9.0, 37, 4.3),
-  createData('Eclair', 262, 16.0, 24, 6.0),
-  createData('Cupcake', 305, 3.7, 67, 4.3),
-  createData('Gingerbread', 356, 16.0, 49, 3.9),
+  createData('Hallo Herr Schneider,', 'relevant'),
+  createData('vielen Dank. Wir konnten es aber leider jetzt nicht mehr f=C3=BCr den Pitch einbauen. F=C3=BCr eine =C3=BCberarbeitete Version ist es aber auf jeden Fa=ll hilfreich!', "relevant"),
+  createData('Vielen Dank und Gr=C3=BC=C3=9Fe', "irrelevant"),
+  createData('Moritz Bunse', "irrelevant"),
+  createData('Harald Schneider <Harald.Schneider@company.com> schrieb am Do. 8. Nov. 2018 um 12:52:', "nextmail")
 ];
 
-function SimpleTable(props) {
-  const { classes } = props;
+class SimpleTable extends React.Component {
 
-  return (
-    <Paper className={classes.root}>
-      <Table className={classes.table}>
-        <TableHead>
-          <TableRow>
-            <TableCell>Dessert (100g serving)</TableCell>
-            <TableCell align="right">Calories</TableCell>
-            <TableCell align="right">Fat (g)</TableCell>
-            <TableCell align="right">Carbs (g)</TableCell>
-            <TableCell align="right">Protein (g)</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map(n => (
-            <TableRow key={n.id}>
-              <TableCell component="th" scope="row">
-                {n.name}
-              </TableCell>
-              <TableCell align="right">{n.calories}</TableCell>
-              <TableCell align="right">{n.fat}</TableCell>
-              <TableCell align="right">{n.carbs}</TableCell>
-              <TableCell align="right">{n.protein}</TableCell>
+  render() {
+    const { classes } = this.props;
+
+    return (
+      <Paper className={classes.root}>
+        <Table className={classes.table}>
+          <TableHead>
+            <TableRow>
+              <TableCell align="center">Irrelevant</TableCell>
+              <TableCell align="center">Relevant</TableCell>
+              <TableCell align="center">Next Mail</TableCell>
+              <TableCell>Line</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Paper>
-  );
+          </TableHead>
+          <TableBody>
+            {data.map(n => (
+              <TableRow key={n.id}>
+                <TableCell align="center">
+                  <Radio
+                    checked={n.linetype === 'relevant'}
+                    onChange={this.handleChange}
+                    value="a"
+                    name="radio-button-demo"
+                    aria-label="A"
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Radio
+                    checked={n.linetype === 'irrelevant'}
+                    onChange={this.handleChange}
+                    value="a"
+                    name="radio-button-demo"
+                    aria-label="A"
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Radio
+                    checked={n.linetype === 'nextmail'}
+                    onChange={this.handleChange}
+                    value="a"
+                    name="radio-button-demo"
+                    aria-label="A"
+                  />
+                </TableCell>
+                <TableCell align="left" >{n.text}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Paper>
+    );
+  }
 }
-
 SimpleTable.propTypes = {
   classes: PropTypes.object.isRequired,
 };
