@@ -1,3 +1,4 @@
 ML_EmailParser.code-workspace
 .vscode
 backend/secrets.py
+*.pyc
