@@ -1,8 +1,15 @@
 from flask import Flask, jsonify
 from flasgger import Swagger
+from pymongo import MongoClient
+
+from secrets import MONGO_URI
 
 app = Flask(__name__)
 swagger = Swagger(app)
+
+client = MongoClient(MONGO_URI)
+mails = client["emailparser"]["mails"]
+
 
 @app.route('/emails')
 def emails():
@@ -33,7 +40,9 @@ def emails():
         examples:
           ['my.mail@address.com_Thu Aug 09 2018 06:48:01 GMT-0700 (PDT)_subject of mail', 'my.mail@address.com_Thu Aug 09 2018 06:52:01 GMT-0700 (PDT)_Re: subject of mail']
     """
-    emails = ['my.mail@address.com_Thu Aug 09 2018 06:48:01 GMT-0700 (PDT)_subject of mail', 'my.mail@address.com_Thu Aug 09 2018 06:52:01 GMT-0700 (PDT)_Re: subject of mail']
+    emails = []
+    for mail in mails.find():
+        emails.append(mail["id"])
 
     return jsonify(emails)
 
