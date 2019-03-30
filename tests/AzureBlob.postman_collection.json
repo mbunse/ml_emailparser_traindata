@@ -1,0 +1,164 @@
+{
+	"info": {
+		"_postman_id": "2b2e741f-28bf-4ece-9f07-2246cd474dea",
+		"name": "AzureBlob",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create Blob",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "e34f7d78-f222-4278-8e47-37822b425ae5",
+						"exec": [
+							"var mastKey = postman.getEnvironmentVariable(\"masterKey\");",
+							"console.log(\"mastKey = \" + mastKey);",
+							"",
+							"var storageAccount = postman.getEnvironmentVariable(\"storageAccount\");",
+							"console.log(\"storageAccount = \" + storageAccount);",
+							"",
+							"var contentType = \"text/plain; charset=UTF-8\";",
+							"",
+							"var today=new Date();",
+							"var UTCstring = today.toUTCString();",
+							"postman.setEnvironmentVariable(\"RFC1123time\", UTCstring);",
+							"console.log(\"UTCstring = \" + UTCstring);",
+							"",
+							"var contentMd5 = CryptoJS.MD5(request.data);",
+							"postman.setEnvironmentVariable(\"contentMd5\", contentMd5);",
+							"",
+							"console.log(\"contentMd5 = \" + contentMd5);",
+							"",
+							"var url = request.url.trim();",
+							"console.log(\"request url = \" + url);",
+							"",
+							"var strippedurl = url.replace(new RegExp('^https?://[^/]+/'), '/')",
+							"console.log(\"stripped url = \" + strippedurl);",
+							"",
+							"var strippedparts = strippedurl.split(\"/\");",
+							"var truestrippedcount = (strippedparts.length - 1);",
+							"console.log(\"truestrippedcount = \" + truestrippedcount);",
+							"",
+							"var resourceId = \"\";",
+							"var resType = \"\";",
+							"",
+							"resType = strippedparts[truestrippedcount - 1];",
+							"console.log(\"resType = \" + resType);",
+							"",
+							"strippedurl = strippedurl.substring(1);",
+							"console.log(\"strippedurl = \" + strippedurl);",
+							"",
+							"resourceId = \"/\" + storageAccount + \"/\" + strippedurl;",
+							"console.log(\"resourceId = \" + resourceId);",
+							"",
+							"var verb = request.method.toLowerCase();",
+							"",
+							"var date = UTCstring.toLowerCase();",
+							"request.headers[\"x-ms-date\"] = UTCstring;",
+							"var canonicalHeadersArr = []",
+							"var headers = request.headers;",
+							"for (var header in headers) {",
+							"    if (header.startsWith(\"x-ms-\")) {",
+							"        canonicalHeadersArr.push(header)",
+							"    }",
+							"}",
+							"canonicalHeadersArr.sort()",
+							"//console.log(\"canonicalHeadersArr = \" + canonicalHeadersArr.join(\" \"));",
+							"",
+							"canonicalHeaders = []",
+							"for (var i = 0; i <canonicalHeadersArr.length; i++) {",
+							"    var headerVal = request.headers[canonicalHeadersArr[i]];",
+							"    canonicalHeaders = canonicalHeaders + canonicalHeadersArr[i] + \":\" + headerVal + \"\\n\";",
+							"}",
+							"console.log(\"canonicalHeaders = \" + canonicalHeaders);",
+							"",
+							"",
+							"var key = CryptoJS.enc.Base64.parse(mastKey);",
+							"console.log(\"key = \" + key);",
+							"var text = (verb || \"\").toUpperCase() + \"\\n\" +",
+							"                (contentMd5 || \"\") + \"\\n\" + ",
+							"                (contentType || \"\") + \"\\n\" +",
+							"                \"\\n\" + //(UTCstring || \"\") + \"\\n\" + ",
+							"                (canonicalHeaders || \"\\n\") +",
+							"               (resourceId || \"\");",
+							"console.log(\"text = \" + text);",
+							"",
+							"var signature = CryptoJS.HmacSHA256(text, key);",
+							"console.log(\"signature = \" + signature);",
+							"",
+							"var base64Bits = CryptoJS.enc.Base64.stringify(signature);",
+							"console.log(\"base64Bits = \" + base64Bits);",
+							"",
+							"var KeyType = \"SharedKeyLite\";",
+							"var TokenVersion = \"1.0\";",
+							"var accessToken = KeyType + \" \" + storageAccount + \":\" + base64Bits;",
+							"postman.setEnvironmentVariable(\"accessToken\", accessToken);",
+							"console.log(\"accessToken = \" + accessToken);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "{{accessToken}}"
+					},
+					{
+						"key": "x-ms-version",
+						"type": "text",
+						"value": "2018-03-28"
+					},
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "text/plain; charset=UTF-8",
+						"type": "text"
+					},
+					{
+						"key": "x-ms-date",
+						"value": "{{RFC1123time}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-MD5",
+						"value": "{{contentMd5}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "test"
+				},
+				"url": {
+					"raw": "https://emailparserblob.blob.core.windows.net/mails/test.eml",
+					"protocol": "https",
+					"host": [
+						"emailparserblob",
+						"blob",
+						"core",
+						"windows",
+						"net"
+					],
+					"path": [
+						"mails",
+						"test.eml"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
