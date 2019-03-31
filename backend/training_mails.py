@@ -1,15 +1,24 @@
+import email
+import email.policy
+from quopri import decodestring
+
 from flask import Flask, jsonify, abort
 from flasgger import Swagger
 from azure.storage.blob import BlockBlobService
 from azure.common import AzureMissingResourceHttpError
 from werkzeug.exceptions import HTTPException
+
+from bs4 import BeautifulSoup
+import bs4.element
+
 from secrets import BLOB_ACCOUNT, BLOB_KEY
 
 app = Flask(__name__)
 swagger = Swagger(app)
 
 # https://docs.microsoft.com/de-de/azure/storage/blobs/storage-quickstart-blobs-python
-block_blob_service = BlockBlobService(account_name=BLOB_ACCOUNT, account_key=BLOB_KEY)
+block_blob_service = BlockBlobService(
+    account_name=BLOB_ACCOUNT, account_key=BLOB_KEY)
 container_name = "mails"
 block_blob_service.list_blobs(container_name)
 mails = block_blob_service.list_blobs(container_name)
@@ -41,6 +50,7 @@ def emails():
 
     return jsonify(emails)
 
+
 @app.route("/emails/<email_hash>")
 def email_lines(email_hash):
     """Endpoint returning a list of email hashes
@@ -68,10 +78,40 @@ def email_lines(email_hash):
         examples:
           ['e3784d58de4458deb228303590605d82', '2eef2b4d6c7fa0659231668defadc107']
     """
-    try: 
-      eml = block_blob_service.get_blob_to_text(container_name, email_hash)
+    try:
+      eml = block_blob_service.get_blob_to_text(
+          container_name, email_hash).content
     except AzureMissingResourceHttpError:
       abort(404)
-    return jsonify([eml.content])
+
+    message = email.message_from_string(eml, policy=email.policy.default)
+    payload = _extract_payload(message)
+    return jsonify([payload])
+
+
+def _extract_payload(email_message):
+  """Function to extract text content from
+  
+  :param email_message: email message to extract content from
+  :type email_message: email.message.EmailMessage
+
+  :return: content fo email
+
+  :rtype: str
+  """
+
+  content = ""
+  for part in email_message.walk():
+    if part.get_content_type() in ["text/plain", "text/html"]:
+      if "Content-Transfer-Encoding" in part:
+        payload = decodestring(part.get_payload()).decode()
+      else:
+        payload = part.get_payload()
+      if part.get_content_type() == "text/html":
+        soup = BeautifulSoup(payload, 'html.parser')
+        content = content + soup.get_text(separator="\n")
+      else: 
+        content = content + payload
+  return content
 
 app.run(debug=True)
