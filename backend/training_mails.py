@@ -104,12 +104,18 @@ def _extract_payload(email_message):
   content = ""
   if email_message.is_multipart():
     parts = email_message.get_payload()
-    content_types = [part.get_content_type() for part in parts if part.get_content_type() in relevant_content_types]
-    if "text/plain" in content_types:
-      content = content + _extract_payload(parts[content_types.index("text/plain")])
+
+    # handle alternative parts, e.g. html and text
+    # if text/plain is available, than only use this
+    if email_message.get_content_subtype == "alternative":
+      content_types = [part.get_content_type() for part in parts if part.get_content_type() in relevant_content_types]
+      if "text/plain" in content_types:
+        content = content + _extract_payload(parts[content_types.index("text/plain")])
     else:
+      # iterate through parts
       for part in parts:
         content = content + _extract_payload(part)
+        
   elif email_message.get_content_type() in relevant_content_types:
     payload = email_message.get_payload(decode=True).decode()
     if email_message.get_content_type() == "text/html":
