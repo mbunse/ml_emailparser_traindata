@@ -14,9 +14,10 @@ import Badge from '@material-ui/core/Badge';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import NotificationsIcon from '@material-ui/icons/Notifications';
-import { mainListItems, secondaryListItems } from '../listItems';
 import LabeledMailLines from '../LabeledMailLines';
+import ListTrainingMails from '../ListTrainingMails';
 import withRoot from '../withRoot';
+import MenuList from '../MenuList';
 
 const drawerWidth = 240;
 
@@ -100,7 +101,8 @@ const styles = theme => ({
 class Dashboard extends React.Component {
   state = {
     open: true,
-    page: 'list'
+    page: 'list',
+    email_hash: ''
   };
 
   handleDrawerOpen = () => {
@@ -115,6 +117,15 @@ class Dashboard extends React.Component {
     this.setState({ [name]: event.target.value });
   };
 
+  handleClick = (event) => {
+    this.setState({email_hash: event.currentTarget.id,
+    page: 'email'});
+  }
+
+  handleMenuClick = (event) => {
+    this.setState({page: event.currentTarget.id});
+
+  }
   render() {
     const { classes } = this.props;
 
@@ -126,10 +137,10 @@ class Dashboard extends React.Component {
           <main className={classes.content}>
             <div className={classes.appBarSpacer} />
             <Typography variant="h4" gutterBottom component="h2">
-              Email
+              List
             </Typography>
             <div className={classes.tableContainer}>
-              <LabeledMailLines />
+              <ListTrainingMails handleClick={this.handleClick}/>
             </div>
           </main>;
           break;
@@ -141,7 +152,7 @@ class Dashboard extends React.Component {
               Email
             </Typography>
             <div className={classes.tableContainer}>
-              <LabeledMailLines />
+              <LabeledMailLines email_hash={this.state.email_hash}/>
             </div>
           </main>;
         break;
@@ -165,7 +176,7 @@ class Dashboard extends React.Component {
                 this.state.open && classes.menuButtonHidden,
               )}
             >
-              <MenuIcon />
+              <MenuIcon/>
             </IconButton>
             <Typography
               component="h1"
@@ -196,9 +207,7 @@ class Dashboard extends React.Component {
             </IconButton>
           </div>
           <Divider />
-          <List>{mainListItems}</List>
-          <Divider />
-          <List>{secondaryListItems}</List>
+          <List><MenuList handleClick={this.handleMenuClick}/></List>
         </Drawer>
           {page}
       </div>

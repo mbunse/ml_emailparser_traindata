@@ -29,8 +29,7 @@ class LabeledMailLines extends React.Component {
     };
   }
   componentDidMount() {
-    backend.get('/emails/ab96a526a51b64907ec003c62cd2323d').then(res => {
-      console.log(res.data);
+    backend.get('/emails/' + this.props.email_hash).then(res => {
       var data = res.data.map((element, index) => {
         return {id: index, text: element, linetype: "irrelevant"};
       });
@@ -99,6 +98,7 @@ class LabeledMailLines extends React.Component {
 }
 LabeledMailLines.propTypes = {
   classes: PropTypes.object.isRequired,
+  email_hash: PropTypes.string.isRequired
 };
 
 export default withStyles(styles)(LabeledMailLines);
