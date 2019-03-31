@@ -120,6 +120,8 @@ def _extract_payload(email_message):
     payload = email_message.get_payload(decode=True).decode()
     if email_message.get_content_type() == "text/html":
       soup = BeautifulSoup(payload, 'html.parser').find("body")
+      if soup == None:
+        soup = BeautifulSoup(payload, 'html.parser')
       content = content + soup.get_text(separator="\n")
     else: 
       content = content + payload
