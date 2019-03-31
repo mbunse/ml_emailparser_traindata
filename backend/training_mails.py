@@ -100,19 +100,26 @@ def _extract_payload(email_message):
 
   :rtype: str
   """
-
+  relevant_content_types = ["text/plain", "text/html"]
   content = ""
-  for part in email_message.walk():
-    if part.get_content_type() in ["text/plain", "text/html"]:
-      if "Content-Transfer-Encoding" in part:
-        payload = decodestring(part.get_payload()).decode()
-      else:
-        payload = part.get_payload()
-      if part.get_content_type() == "text/html":
-        soup = BeautifulSoup(payload, 'html.parser').find("body")
-        content = content + soup.get_text(separator="\n")
-      else: 
-        content = content + payload
+  if email_message.is_multipart():
+    parts = email_message.get_payload()
+    content_types = [part.get_content_type() for part in parts if part.get_content_type() in relevant_content_types]
+    if "text/plain" in content_types:
+      content = content + _extract_payload(parts[content_types.index("text/plain")])
+    else:
+      for part in parts:
+        content = content + _extract_payload(part)
+  elif email_message.get_content_type() in relevant_content_types:
+    if "Content-Transfer-Encoding" in email_message:
+      payload = decodestring(email_message.get_payload()).decode()
+    else:
+      payload = email_message.get_payload()
+    if email_message.get_content_type() == "text/html":
+      soup = BeautifulSoup(payload, 'html.parser').find("body")
+      content = content + soup.get_text(separator="\n")
+    else: 
+      content = content + payload
   return content
 
 app.run(debug=True)
