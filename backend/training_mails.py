@@ -111,10 +111,7 @@ def _extract_payload(email_message):
       for part in parts:
         content = content + _extract_payload(part)
   elif email_message.get_content_type() in relevant_content_types:
-    if "Content-Transfer-Encoding" in email_message:
-      payload = decodestring(email_message.get_payload()).decode()
-    else:
-      payload = email_message.get_payload()
+    payload = email_message.get_payload(decode=True).decode()
     if email_message.get_content_type() == "text/html":
       soup = BeautifulSoup(payload, 'html.parser').find("body")
       content = content + soup.get_text(separator="\n")
