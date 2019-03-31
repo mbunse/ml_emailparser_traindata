@@ -3,6 +3,7 @@ import email.policy
 from quopri import decodestring
 
 from flask import Flask, jsonify, abort
+from flask_cors import CORS
 from flasgger import Swagger
 from azure.storage.blob import BlockBlobService
 from azure.common import AzureMissingResourceHttpError
@@ -14,6 +15,7 @@ import bs4.element
 from secrets import BLOB_ACCOUNT, BLOB_KEY
 
 app = Flask(__name__)
+CORS(app)
 swagger = Swagger(app)
 
 # https://docs.microsoft.com/de-de/azure/storage/blobs/storage-quickstart-blobs-python
