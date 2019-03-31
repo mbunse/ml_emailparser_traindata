@@ -15,7 +15,7 @@ import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import { mainListItems, secondaryListItems } from '../listItems';
-import SimpleTable from '../SimpleTable';
+import LabeledMailLines from '../LabeledMailLines';
 import withRoot from '../withRoot';
 
 const drawerWidth = 240;
@@ -100,6 +100,7 @@ const styles = theme => ({
 class Dashboard extends React.Component {
   state = {
     open: true,
+    page: 'list'
   };
 
   handleDrawerOpen = () => {
@@ -117,6 +118,36 @@ class Dashboard extends React.Component {
   render() {
     const { classes } = this.props;
 
+    let page;
+    // eslint-disable-next-line default-case
+    switch (this.state.page) {
+      case 'list':
+        page =
+          <main className={classes.content}>
+            <div className={classes.appBarSpacer} />
+            <Typography variant="h4" gutterBottom component="h2">
+              Email
+            </Typography>
+            <div className={classes.tableContainer}>
+              <LabeledMailLines />
+            </div>
+          </main>;
+          break;
+      case 'email':
+        page = 
+          <main className={classes.content}>
+            <div className={classes.appBarSpacer} />
+            <Typography variant="h4" gutterBottom component="h2">
+              Email
+            </Typography>
+            <div className={classes.tableContainer}>
+              <LabeledMailLines />
+            </div>
+          </main>;
+        break;
+      default:
+        page = null;
+    }   
     return (
       <div className={classes.root}>
         <CssBaseline />
@@ -169,15 +200,7 @@ class Dashboard extends React.Component {
           <Divider />
           <List>{secondaryListItems}</List>
         </Drawer>
-        <main className={classes.content}>
-          <div className={classes.appBarSpacer} />
-          <Typography variant="h4" gutterBottom component="h2">
-            Email
-          </Typography>
-          <div className={classes.tableContainer}>
-            <SimpleTable />
-          </div>
-        </main>
+          {page}
       </div>
     );
   }

@@ -8,6 +8,8 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import Radio from '@material-ui/core/Radio';
+import backend from './backend';
+
 const styles = {
   root: {
     width: '100%',
@@ -18,24 +20,32 @@ const styles = {
   },
 };
 
-let id = 0;
-function createData(text, linetype) {
-  id += 1;
-  return { id, text, linetype };
-}
-
-const data = [
-  createData('Hallo Herr Schneider,', 'relevant'),
-  createData('vielen Dank. Wir konnten es aber leider jetzt nicht mehr f=C3=BCr den Pitch einbauen. F=C3=BCr eine =C3=BCberarbeitete Version ist es aber auf jeden Fa=ll hilfreich!', "relevant"),
-  createData('Vielen Dank und Gr=C3=BC=C3=9Fe', "irrelevant"),
-  createData('Moritz Bunse', "irrelevant"),
-  createData('Harald Schneider <Harald.Schneider@company.com> schrieb am Do. 8. Nov. 2018 um 12:52:', "nextmail")
-];
-
-class SimpleTable extends React.Component {
+class LabeledMailLines extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoaded: false,
+      data: []
+    };
+  }
+  componentDidMount() {
+    backend.get('/emails/ab96a526a51b64907ec003c62cd2323d').then(res => {
+      console.log(res.data);
+      var data = res.data.map((element, index) => {
+        return {id: index, text: element, linetype: "irrelevant"};
+      });
+      console.log(data);
+      this.setState({
+        isLoaded: true,
+        data: data
+      });
+    });
+  }
 
   render() {
     const { classes } = this.props;
+
+    const { data } = this.state;
 
     return (
       <Paper className={classes.root}>
@@ -53,7 +63,7 @@ class SimpleTable extends React.Component {
               <TableRow key={n.id}>
                 <TableCell align="center">
                   <Radio
-                    checked={n.linetype === 'relevant'}
+                    checked={n.linetype === 'irrelevant'}
                     onChange={this.handleChange}
                     value="a"
                     name="radio-button-demo"
@@ -62,7 +72,7 @@ class SimpleTable extends React.Component {
                 </TableCell>
                 <TableCell align="center">
                   <Radio
-                    checked={n.linetype === 'irrelevant'}
+                    checked={n.linetype === 'relevant'}
                     onChange={this.handleChange}
                     value="a"
                     name="radio-button-demo"
@@ -87,8 +97,8 @@ class SimpleTable extends React.Component {
     );
   }
 }
-SimpleTable.propTypes = {
+LabeledMailLines.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(SimpleTable);
+export default withStyles(styles)(LabeledMailLines);
