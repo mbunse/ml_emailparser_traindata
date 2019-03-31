@@ -1,7 +1,8 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, abort
 from flasgger import Swagger
 from azure.storage.blob import BlockBlobService
-
+from azure.common import AzureMissingResourceHttpError
+from werkzeug.exceptions import HTTPException
 from secrets import BLOB_ACCOUNT, BLOB_KEY
 
 app = Flask(__name__)
@@ -15,16 +16,8 @@ mails = block_blob_service.list_blobs(container_name)
 
 @app.route('/emails')
 def emails():
-    """Example endpoint returning a list of colors by palette
-    This is using docstrings for specifications.
+    """Endpoint returning a list of email hashes
     ---
-    parameters:
-      - name: palette
-        in: path
-        type: string
-        enum: ['all', 'rgb', 'cmyk']
-        required: true
-        default: all
     definitions:
       Emails:
         type: array
@@ -47,5 +40,38 @@ def emails():
         emails.append(mail.name)
 
     return jsonify(emails)
+
+@app.route("/emails/<email_hash>")
+def email_lines(email_hash):
+    """Endpoint returning a list of email hashes
+    ---
+    parameters:
+      - name: email_hash
+        in: path
+        type: string
+        required: true
+        examples: e3784d58de4458deb228303590605d82
+    definitions:
+      EmailLines:
+        type: array
+        items:
+          $ref: '#/definitions/EmailId
+      EmailLine:
+        type: string
+        description: Line of email
+        examples: Dear Sir/Madam
+    responses:
+      200:
+        description: A list of emails
+        schema:
+          $ref: '#/definitions/Emails'
+        examples:
+          ['e3784d58de4458deb228303590605d82', '2eef2b4d6c7fa0659231668defadc107']
+    """
+    try: 
+      eml = block_blob_service.get_blob_to_text(container_name, email_hash)
+    except AzureMissingResourceHttpError:
+      abort(404)
+    return jsonify([eml.content])
 
 app.run(debug=True)
