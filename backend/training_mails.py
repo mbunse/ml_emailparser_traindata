@@ -86,7 +86,8 @@ def email_lines(email_hash):
 
     message = email.message_from_string(eml, policy=email.policy.default)
     payload = _extract_payload(message)
-    return jsonify([payload])
+    payload = payload.replace("\r", "").split("\n")
+    return jsonify(payload)
 
 
 def _extract_payload(email_message):
@@ -108,7 +109,7 @@ def _extract_payload(email_message):
       else:
         payload = part.get_payload()
       if part.get_content_type() == "text/html":
-        soup = BeautifulSoup(payload, 'html.parser')
+        soup = BeautifulSoup(payload, 'html.parser').find("body")
         content = content + soup.get_text(separator="\n")
       else: 
         content = content + payload
