@@ -1,29 +1,24 @@
 import email
 import email.policy
 from quopri import decodestring
+import glob
+import os
 
 from flask import Flask, jsonify, abort
 from flask_cors import CORS
 from flasgger import Swagger
-from azure.storage.blob import BlockBlobService
-from azure.common import AzureMissingResourceHttpError
 from werkzeug.exceptions import HTTPException
 
 from bs4 import BeautifulSoup
 import bs4.element
 
-from secrets import BLOB_ACCOUNT, BLOB_KEY
-
 app = Flask(__name__)
 CORS(app)
 swagger = Swagger(app)
 
-# https://docs.microsoft.com/de-de/azure/storage/blobs/storage-quickstart-blobs-python
-block_blob_service = BlockBlobService(
-    account_name=BLOB_ACCOUNT, account_key=BLOB_KEY)
-container_name = "mails"
-block_blob_service.list_blobs(container_name)
-mails = block_blob_service.list_blobs(container_name)
+mails = []
+for mail_path in glob.iglob("data/*.eml"):
+  mails.append(os.path.basename(mail_path).split(".")[0])
 
 @app.route('/emails')
 def emails():
@@ -46,11 +41,7 @@ def emails():
         examples:
           ['e3784d58de4458deb228303590605d82', '2eef2b4d6c7fa0659231668defadc107']
     """
-    emails = []
-    for mail in mails:
-        emails.append(mail.name)
-
-    return jsonify(emails)
+    return jsonify(mails)
 
 
 @app.route("/emails/<email_hash>")
@@ -81,9 +72,11 @@ def email_lines(email_hash):
           ['e3784d58de4458deb228303590605d82', '2eef2b4d6c7fa0659231668defadc107']
     """
     try:
-      eml = block_blob_service.get_blob_to_text(
-          container_name, email_hash).content
-    except AzureMissingResourceHttpError:
+      # eml = block_blob_service.get_blob_to_text(
+      #     container_name, email_hash).content
+      with open(os.path.join("data", email_hash + ".eml")) as eml_file:
+        eml = eml_file.read()
+    except FileNotFoundError:
       abort(404)
 
     message = email.message_from_string(eml, policy=email.policy.default)
