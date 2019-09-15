@@ -2,3 +2,4 @@ ML_EmailParser.code-workspace
 .vscode
 *.pyc
 .DS_Store
+.pytest_cache
