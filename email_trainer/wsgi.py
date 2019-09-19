@@ -4,7 +4,7 @@ from quopri import decodestring
 import glob
 import os
 
-from flask import Flask, jsonify, abort
+from flask import Flask, jsonify, abort, render_template
 from flask_cors import CORS
 from flasgger import Swagger
 from werkzeug.exceptions import HTTPException
@@ -12,7 +12,11 @@ from werkzeug.exceptions import HTTPException
 from bs4 import BeautifulSoup
 import bs4.element
 
-app = Flask(__name__)
+app = Flask(__name__,
+  template_folder="templates/",
+  static_folder="static/"
+  )
+
 CORS(app)
 swagger = Swagger(app)
 
@@ -123,4 +127,9 @@ def _extract_payload(email_message):
       content = content + payload
   return content
 
-app.run(debug=True)
+@app.route("/")
+def index():
+  return render_template("index.html")
+
+if __name__ == "__main__":
+  app.run(debug=True)

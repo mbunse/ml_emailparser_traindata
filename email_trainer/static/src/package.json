@@ -5,15 +5,16 @@
   "dependencies": {
     "@material-ui/core": "^3.9.2",
     "@material-ui/icons": "^3.0.2",
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "react": "^16.8.5",
     "react-dom": "^16.8.5",
-    "react-scripts": "2.1.8",
+    "react-scripts": "^3.1.1",
     "recharts": "^1.5.0"
   },
   "scripts": {
+    "copy": "cp build/*.html ../../templates/. && cp -a build/* ../. ",
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && npm run copy",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -25,5 +26,7 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "proxy": "http://localhost:5000",
+  "devDependencies": {}
 }
