@@ -1,7 +1,7 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import classNames from 'classnames';
-import { withStyles } from '@material-ui/core/styles';
+import React, { useState } from 'react';
+import { Route, BrowserRouter as Router } from "react-router-dom";
+import clsx from 'clsx';
+import { makeStyles } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Drawer from '@material-ui/core/Drawer';
 import AppBar from '@material-ui/core/AppBar';
@@ -14,14 +14,13 @@ import Badge from '@material-ui/core/Badge';
 import MenuIcon from '@material-ui/icons/Menu';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import NotificationsIcon from '@material-ui/icons/Notifications';
-import LabeledMailLines from '../LabeledMailLines';
-import ListTrainingMails from '../ListTrainingMails';
-import withRoot from '../withRoot';
-import MenuList from '../MenuList';
+import MenuListItems from '../MenuList';
+import EmailList from '../sites/EmailList';
+import LabelEmail from '../sites/LabelEmail';
 
 const drawerWidth = 240;
 
-const styles = theme => ({
+export const useStyles = makeStyles(theme => ({
   root: {
     display: 'flex',
   },
@@ -96,87 +95,45 @@ const styles = theme => ({
   h5: {
     marginBottom: theme.spacing.unit * 2,
   },
-});
+}));
 
-class Dashboard extends React.Component {
-  state = {
-    open: true,
-    page: 'list',
-    email_hash: ''
+export default function Dashboard() {
+  const classes = useStyles();
+
+  const [open, setOpen] = useState(true);
+  // eslint-disable-next-line no-unused-vars
+  const [page, setPage] = useState('list');
+  // eslint-disable-next-line no-unused-vars
+  const [emailHash, setEmailHash] = useState();
+
+  const handleDrawerOpen = () => {
+    setOpen(true);
+  };
+  const handleDrawerClose = () => {
+    setOpen(false);
   };
 
-  handleDrawerOpen = () => {
-    this.setState({ open: true });
-  };
-
-  handleDrawerClose = () => {
-    this.setState({ open: false });
-  };
-
-  handleChange = name => event => {
-    this.setState({ [name]: event.target.value });
-  };
-
-  handleClick = (event) => {
-    this.setState({email_hash: event.currentTarget.id,
-    page: 'email'});
+  const handleClick = (event) => {
+    setEmailHash(event.currentTarget.id);
+    setPage('email');
   }
 
-  handleMenuClick = (event) => {
-    this.setState({page: event.currentTarget.id});
-
-  }
-  render() {
-    const { classes } = this.props;
-
-    let page;
-    // eslint-disable-next-line default-case
-    switch (this.state.page) {
-      case 'list':
-        page =
-          <main className={classes.content}>
-            <div className={classes.appBarSpacer} />
-            <Typography variant="h4" gutterBottom component="h2">
-              List
-            </Typography>
-            <div className={classes.tableContainer}>
-              <ListTrainingMails handleClick={this.handleClick}/>
-            </div>
-          </main>;
-          break;
-      case 'email':
-        page = 
-          <main className={classes.content}>
-            <div className={classes.appBarSpacer} />
-            <Typography variant="h4" gutterBottom component="h2">
-              Email
-            </Typography>
-            <div className={classes.tableContainer}>
-              <LabeledMailLines email_hash={this.state.email_hash}/>
-            </div>
-          </main>;
-        break;
-      default:
-        page = null;
-    }   
-    return (
+  return (
+    <Router>
       <div className={classes.root}>
         <CssBaseline />
-        <AppBar
-          position="absolute"
-          className={classNames(classes.appBar, this.state.open && classes.appBarShift)}
+        <AppBar position="absolute"
+          className={clsx(classes.appBar, open && classes.appBarShift)}
         >
-          <Toolbar disableGutters={!this.state.open} className={classes.toolbar}>
+          <Toolbar className={classes.toolbar}>
             <IconButton
+              edge="start"
               color="inherit"
-              aria-label="Open drawer"
-              onClick={this.handleDrawerOpen}
-              className={classNames(
-                classes.menuButton,
-                this.state.open && classes.menuButtonHidden,
-              )}
+              aria-label="open drawer"
+              onClick={handleDrawerOpen}
+              className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
             >
-              <MenuIcon/>
+              <MenuIcon />
             </IconButton>
             <Typography
               component="h1"
@@ -197,26 +154,23 @@ class Dashboard extends React.Component {
         <Drawer
           variant="permanent"
           classes={{
-            paper: classNames(classes.drawerPaper, !this.state.open && classes.drawerPaperClose),
+            paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
           }}
-          open={this.state.open}
+          open={open}
         >
           <div className={classes.toolbarIcon}>
-            <IconButton onClick={this.handleDrawerClose}>
+            <IconButton onClick={handleDrawerClose}>
               <ChevronLeftIcon />
             </IconButton>
           </div>
           <Divider />
-          <List><MenuList handleClick={this.handleMenuClick}/></List>
+          <List>
+            <MenuListItems handleClick={handleClick} />
+          </List>
         </Drawer>
-          {page}
+        <Route exact path="/" component={EmailList} />
+        <Route path="/:emailHash" component={LabelEmail} />
       </div>
-    );
-  }
+    </Router>
+  );
 }
-
-Dashboard.propTypes = {
-  classes: PropTypes.object.isRequired,
-};
-
-export default withRoot(withStyles(styles)(Dashboard));
