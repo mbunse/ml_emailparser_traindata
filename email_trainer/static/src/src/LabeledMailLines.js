@@ -17,8 +17,6 @@ export default function LabeledMailLines(props) {
 
   function handleChangeForLine(line) {
     return event => {
-      console.log(event.target.name);
-      console.log(line);
       setData(data.map((element, index) => {
         if (index === line) {
           return {
@@ -30,7 +28,6 @@ export default function LabeledMailLines(props) {
         else {
           return element;
         }
-        //setData(event.target.value);
       }));
 
     }
@@ -66,7 +63,6 @@ export default function LabeledMailLines(props) {
                   onChange={handleChangeForLine(n.linenumber)}
                   value="irrelevant"
                   name={`${n.linenumber}_irrelevant`}
-                  aria-label="A"
                 />
               </TableCell>
               <TableCell align="center">
@@ -74,9 +70,7 @@ export default function LabeledMailLines(props) {
                   checked={n.linetype === 'relevant'}
                   onChange={handleChangeForLine(n.linenumber)}
                   value="relevant"
-                  key={n.linenumber}
                   name={`${n.linenumber}_relevant`}
-                  aria-label="A"
                 />
               </TableCell>
               <TableCell align="center">
@@ -84,9 +78,7 @@ export default function LabeledMailLines(props) {
                   checked={n.linetype === 'nextmail'}
                   onChange={handleChangeForLine(n.linenumber)}
                   value="nextmail"
-                  key={n.linenumber}
                   name={`${n.linenumber}_nextmail`}
-                  aria-label="A"
                 />
               </TableCell>
               <TableCell align="left" >{n.text}</TableCell>
