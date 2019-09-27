@@ -13,7 +13,7 @@ export default function LabelEmail({ match }) {
                 Email
             </Typography>
             <div className={classes.tableContainer}>
-                <LabeledMailLines email_hash={match.params.emailHash} />
+                <LabeledMailLines emailHash={match.params.emailHash} />
             </div>
         </main>);
 }
