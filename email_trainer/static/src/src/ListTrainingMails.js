@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { makeStyles } from '@material-ui/styles';
+import { Link } from 'react-router-dom';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
 import backend from './backend';
-const useStyles = makeStyles({
-  root: {}, // a style rule
-});
 
 export default function ListTrainingMails(props) {
 
@@ -21,13 +18,11 @@ export default function ListTrainingMails(props) {
     fetchData()
   }, []);
 
-  const classes = useStyles(props);
-
   return (
-    <div className={classes.root}>
-      {data.map(n => (
-        <ListItem key={n} id={n} button onClick={props.handleClick}>
-          <ListItemText primary={n} />
+    <div>
+      {data.map(emailHash => (
+        <ListItem button component={Link} to={`/${emailHash}`} key={emailHash} id={emailHash} onClick={props.handleClick}>
+          <ListItemText primary={emailHash} />
         </ListItem>
       ))}
       <Fab color="primary" aria-label="add">
