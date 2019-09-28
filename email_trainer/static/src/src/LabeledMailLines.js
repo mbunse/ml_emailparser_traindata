@@ -4,6 +4,8 @@ import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 import Radio from '@material-ui/core/Radio';
 import backend from './backend';
@@ -45,43 +47,38 @@ export default function LabeledMailLines(props) {
   }, [props]);
   return (
     <Paper className={classes.root}>
-      <Table className={classes.table}>
+      <Table className={classes.table} size="small">
         <TableHead>
           <TableRow>
-            <TableCell align="center">Irrelevant</TableCell>
-            <TableCell align="center">Relevant</TableCell>
-            <TableCell align="center">Next Mail</TableCell>
+            <TableCell style={{ maxWidth: "5px", padding: "2px",}} align="center">Line</TableCell>
+            {props.linetypes.map(linetype => (
+              <TableCell style={{ width: "42px", padding: "2px", }} align="center">{linetype.name}</TableCell>
+            ))}
             <TableCell>Line</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {data.map(n => (
-            <TableRow key={n.linenumber}>
-              <TableCell align="center">
+            <TableRow key={n.linenumber} 
+            className={classes.emailListEntry}>
+              <TableCell style={{ width: "5px", padding: "2px", }} className={classes.emailListEntry} align="center">
+                {n.linenumber}
+              </TableCell>
+              {props.linetypes.map(linetype => (
+              <TableCell style={{ width: "42px", padding: "2px", }} className={classes.emailListEntry} align="center">
                 <Radio
-                  checked={n.linetype === 'irrelevant'}
+                  checked={n.linetype === linetype.value}
                   onChange={handleChangeForLine(n.linenumber)}
-                  value="irrelevant"
-                  name={`${n.linenumber}_irrelevant`}
+                  value={linetype.value}
+                  name={`${n.linenumber}_${linetype.value}`}
                 />
               </TableCell>
-              <TableCell align="center">
-                <Radio
-                  checked={n.linetype === 'relevant'}
-                  onChange={handleChangeForLine(n.linenumber)}
-                  value="relevant"
-                  name={`${n.linenumber}_relevant`}
-                />
+                ))}
+              <TableCell align="left" className={classes.emailListEntry} >
+              <Typography component="div">
+              <Box fontFamily="Monospace">{n.text}</Box>
+              </Typography>
               </TableCell>
-              <TableCell align="center">
-                <Radio
-                  checked={n.linetype === 'nextmail'}
-                  onChange={handleChangeForLine(n.linenumber)}
-                  value="nextmail"
-                  name={`${n.linenumber}_nextmail`}
-                />
-              </TableCell>
-              <TableCell align="left" >{n.text}</TableCell>
             </TableRow>
           ))}
         </TableBody>

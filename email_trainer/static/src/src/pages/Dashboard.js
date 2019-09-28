@@ -95,6 +95,11 @@ export const useStyles = makeStyles(theme => ({
   h5: {
     marginBottom: theme.spacing(2),
   },
+  emailListEntry: {
+    height: theme.spacing(1),
+    margin: theme.spacing(1),
+    padding: theme.spacing(0),
+  }
 }));
 
 export default function Dashboard() {
