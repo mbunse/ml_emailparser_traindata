@@ -52,22 +52,14 @@ MAILS = getMails()
 def annotations():
     """Endpoint returning a list of email hashes
     ---
-    definitions:
-      Annotations:
-        type: array
-        items:
-          $ref: '#/definitions/AnnotationName
-      AnnotationName:
-        type: string
-        description: Annotation Name
-        default: "Signature Content"
     responses:
       200:
         description: A list of annotation names
         schema:
-          $ref: '#/definitions/Annotations'
-        examples:
-          ['Signature Content', 'Author Content']
+          type: array
+          items:
+            type: string
+        example: ['Signature Content', 'Author Content']
     """
     session = Session()
     annotation_names = list(chain(*session.query(Zonetype.name).all()))
@@ -78,52 +70,40 @@ def annotations():
 def emails():
     """Endpoint returning a list of email hashes
     ---
-    definitions:
-      Emails:
-        type: array
-        items:
-          $ref: '#/definitions/EmailId
-      EmailId:
-        type: string
-        description: Id of training mail
-        default: e3784d58de4458deb228303590605d82
     responses:
       200:
         description: A list of emails
         schema:
-          $ref: '#/definitions/Emails'
-        examples:
-          ['e3784d58de4458deb228303590605d82', '2eef2b4d6c7fa0659231668defadc107']
+          type: array
+          items:
+            type: string
+            example: '27321'
+          example: 
+            - '27321'
     """
     return jsonify(MAILS)
 
 
-@app.route("/emails/<email_hash>")
+@app.route("/emails/<email_hash>", methods=['GET'])
 def email_lines(email_hash):
     """Endpoint returning a list of email hashes
     ---
     parameters:
       - name: email_hash
         in: path
-        type: string
         required: true
-        examples: e3784d58de4458deb228303590605d82
-    definitions:
-      EmailLines:
-        type: array
-        items:
-          $ref: '#/definitions/EmailId
-      EmailLine:
-        type: string
-        description: Line of email
-        examples: Dear Sir/Madam
+        schema:
+          type: string
+        example: '27321'
+        default: '27321'
     responses:
       200:
         description: A list of emails
         schema:
-          $ref: '#/definitions/Emails'
-        examples:
-          ['e3784d58de4458deb228303590605d82', '2eef2b4d6c7fa0659231668defadc107']
+          type: array
+          items:
+            type: string
+          example: ['Dear Sir/Madam', '']
     """
     eml = []
     session = Session()
@@ -154,6 +134,33 @@ def email_lines(email_hash):
     payload = payload.replace("\r", "").split("\n")
     return jsonify(lines_annotated)
 
+@app.route('/emails/<email_hash>', methods=['POST'])
+def update_email_line(email_hash):
+    """Endpoint updating a list of email hashes
+    ---
+    parameters:
+    - name: email_hash
+      in: path
+      required: true
+      schema:
+        type: string
+      example: '27321'
+      default: '27321'
+    - name: Annotations
+      in: body
+      required: true
+      schema:
+        type: array
+        items:
+          type: string
+        example:
+          - 'Dear Sir/Madam'
+          - ''
+    responses:
+      200:
+        description: update OK
+    """
+    return "OK", 200
 
 def _extract_payload(email_message):
   """Function to extract text content from
