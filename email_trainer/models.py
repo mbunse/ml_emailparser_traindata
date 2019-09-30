@@ -13,12 +13,23 @@ class Zonetype(Base):
     def __repr__(self):
        return f"<Zonetype(name='{self.name}')>"
 
+class Zoneline(Base):
+    __tablename__ = 'zonelines'
+    id = Column(Integer, primary_key=True)
+    messageid = Column(Integer, ForeignKey('bodies.messageid'))
+    linetext = Column(String)
+    lineorder = Column(Integer)
+    zoneannotation = relationship("Zoneannotation", uselist=False, back_populates="zoneline")
+
+    def __repr__(self):
+       return f"<Zoneline(messageid='{self.messageid}', linetext='{self.linetext}', lineorder='{self.lineorder}')>"
+
 class Zoneannotation(Base):
     __tablename__ = 'zoneannotations'
     id = Column(Integer, primary_key=True)
     messageid = Column(Integer, ForeignKey('bodies.messageid'))
     lineid = Column(Integer, ForeignKey('zonelines.id'))
-    zoneline = relationship("Zoneline", back_populates="zoneannotation")
+    zoneline = relationship("Zoneline", uselist=False, back_populates="zoneannotation")
     userid = Column(Integer)
     datetime = Column(DateTime)
     annvalue = Column(Integer, ForeignKey('zonetypes.id'))
@@ -29,17 +40,6 @@ class Zoneannotation(Base):
 
     def __repr__(self):
        return f"<Zoneannotation(messageid='({self.messageid})', lineid='{self.lineid}', nicknannvalueame='({self.nicknannvalueame})')>"
-
-class Zoneline(Base):
-    __tablename__ = 'zonelines'
-    id = Column(Integer, primary_key=True)
-    messageid = Column(Integer, ForeignKey('bodies.messageid'))
-    linetext = Column(String)
-    lineorder = Column(Integer)
-    zoneannotation = relationship("Zoneannotation", back_populates="zoneline")
-
-    def __repr__(self):
-       return f"<Zoneline(messageid='{self.messageid}', linetext='{self.linetext}', lineorder='{self.lineorder}')>"
 
 class Errortype(Base):
     __tablename__ = 'errortypes'

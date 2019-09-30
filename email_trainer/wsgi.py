@@ -11,13 +11,13 @@ from flasgger import Swagger
 from werkzeug.exceptions import HTTPException
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, joinedload, load_only
 
 from bs4 import BeautifulSoup
 import bs4.element
 
 from email_trainer.secrets import PASSWORD
-from email_trainer.models import Body, Header, Zoneannotation, Zonetype
+from email_trainer.models import Body, Header, Zoneannotation, Zonetype, Zoneline
 
 app = Flask(__name__,
   template_folder="templates/",
@@ -131,11 +131,22 @@ def email_lines(email_hash):
       eml.append(header.headername + ": " + header.headervalue)
 
     lines_annotated = []
-    for zoneannotation in session.query(Zoneannotation).filter_by(messageid=email_hash).all():
-      eml.append(zoneannotation.zoneline.linetext)
+    for zoneline in (
+      session.query(Zoneline)
+        .options(
+          load_only("messageid", "linetext", "lineorder"),
+          joinedload(Zoneline.zoneannotation)
+            .subqueryload(Zoneannotation.zonetype)
+            .load_only("name"),
+        )
+        .filter_by(messageid=email_hash)
+        .order_by(Zoneline.lineorder)
+        .all()):
+      eml.append(zoneline.linetext)
       lines_annotated.append({
-        "annotation": zoneannotation.zonetype.name, 
-        "linetext": zoneannotation.zoneline.linetext
+        "annotation": zoneline.zoneannotation.zonetype.name, 
+        "linetext": zoneline.linetext,
+        "lineorder": zoneline.lineorder,
       })
     eml = "\n".join(eml)
     message = email.message_from_string(eml, policy=email.policy.default)
