@@ -9,8 +9,14 @@ from flask_cors import CORS
 from flasgger import Swagger
 from werkzeug.exceptions import HTTPException
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from bs4 import BeautifulSoup
 import bs4.element
+
+from email_trainer.secrets import PASSWORD
+from email_trainer.models import Body, Header, Zoneannotation, Zonetype
 
 app = Flask(__name__,
   template_folder="templates/",
@@ -20,9 +26,39 @@ app = Flask(__name__,
 CORS(app)
 swagger = Swagger(app)
 
+engine = create_engine("mysql+mysqlconnector://emailparser_dev:" + PASSWORD + "@localhost/zonerelease",
+  encoding='latin1', echo=True)
+Session = sessionmaker(bind=engine)
+session = Session()
+
 mails = []
-for mail_path in glob.iglob("data/*.eml"):
-  mails.append(os.path.basename(mail_path).split(".")[0])
+for messageid, in session.query(Zoneannotation.messageid).group_by(Zoneannotation.messageid)[1:20]:
+  mails.append(messageid)
+
+@app.route('/annotations')
+def annotations():
+    """Endpoint returning a list of email hashes
+    ---
+    definitions:
+      Annotations:
+        type: array
+        items:
+          $ref: '#/definitions/AnnotationName
+      AnnotationName:
+        type: string
+        description: Annotation Name
+        default: "Signature Content"
+    responses:
+      200:
+        description: A list of annotation names
+        schema:
+          $ref: '#/definitions/Annotations'
+        examples:
+          ['Signature Content', 'Author Content']
+    """
+    annotation_names = list(session.query(Zonetype.name).all())
+    return jsonify(annotation_names)
+
 
 @app.route('/emails')
 def emails():
@@ -75,18 +111,22 @@ def email_lines(email_hash):
         examples:
           ['e3784d58de4458deb228303590605d82', '2eef2b4d6c7fa0659231668defadc107']
     """
-    try:
-      # eml = block_blob_service.get_blob_to_text(
-      #     container_name, email_hash).content
-      with open(os.path.join("data", email_hash + ".eml")) as eml_file:
-        eml = eml_file.read()
-    except FileNotFoundError:
-      abort(404)
+    eml = []
+    for header in session.query(Header).filter_by(messageid=email_hash).all():
+      eml.append(header.headername + ": " + header.headervalue)
 
+    lines_annotated = []
+    for zoneannotation in session.query(Zoneannotation).filter_by(messageid=email_hash).all():
+      eml.append(zoneannotation.zoneline.linetext)
+      lines_annotated.append({
+        "annotation": zoneannotation.zonetype.name, 
+        "linetext": zoneannotation.zoneline.linetext
+      })
+    eml = "\n".join(eml)
     message = email.message_from_string(eml, policy=email.policy.default)
     payload = _extract_payload(message)
     payload = payload.replace("\r", "").split("\n")
-    return jsonify(payload)
+    return jsonify(lines_annotated)
 
 
 def _extract_payload(email_message):

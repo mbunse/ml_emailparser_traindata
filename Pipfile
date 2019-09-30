@@ -12,6 +12,8 @@ flask = "*"
 flask-cors = "*"
 beautifulsoup4 = "*"
 flasgger = "*"
+sqlalchemy = "*"
+mysql-connector-python = "*"
 
 [requires]
 python_version = "3.7"

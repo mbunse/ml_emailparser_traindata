@@ -24,4 +24,11 @@ mysql> select * from zonetypes;
 mysql> source data/enron.sql
 # and wait (4h)
 mysql> select linetext, c.name as linetye from zonelines as a left join zoneannotations  as b on a.id=b.lineid left join zonetypes as c on b.annvalue=c.id where a.messageid=31767;
+
+mysql> create user 'emailparser_dev'@'localhost' identified by 'password';
+
+mysql> grant all on zonerelease.* to 'emailparser_dev'@'localhost';
+
+mysql> select CONCAT_WS('\n', GROUP_CONCAT(CONCAT_WS(' ', CONCAT(headername, ':'), headervalue) SEPARATOR '\n'), body) from bodies left join headers on bodies.messageid = headers.messageid where bodies.messageid=1;
+
 ```
