@@ -3,6 +3,7 @@ import email.policy
 from quopri import decodestring
 import glob
 import os
+from itertools import chain
 
 from flask import Flask, jsonify, abort, render_template
 from flask_cors import CORS
@@ -29,11 +30,23 @@ swagger = Swagger(app)
 engine = create_engine("mysql+mysqlconnector://emailparser_dev:" + PASSWORD + "@localhost/zonerelease",
   encoding='latin1', echo=True)
 Session = sessionmaker(bind=engine)
-session = Session()
 
-mails = []
-for messageid, in session.query(Zoneannotation.messageid).group_by(Zoneannotation.messageid)[1:20]:
-  mails.append(messageid)
+def getMails():
+  """ Get message ids for annotated mails from database
+  
+  Returns
+  -------
+  list of string
+      List of message ids
+  """
+
+  session = Session()
+  mails = []
+  for messageid, in session.query(Zoneannotation.messageid).group_by(Zoneannotation.messageid)[1:20]:
+    mails.append(messageid)
+  return mails
+
+MAILS = getMails()
 
 @app.route('/annotations')
 def annotations():
@@ -56,7 +69,8 @@ def annotations():
         examples:
           ['Signature Content', 'Author Content']
     """
-    annotation_names = list(session.query(Zonetype.name).all())
+    session = Session()
+    annotation_names = list(chain(*session.query(Zonetype.name).all()))
     return jsonify(annotation_names)
 
 
@@ -81,7 +95,7 @@ def emails():
         examples:
           ['e3784d58de4458deb228303590605d82', '2eef2b4d6c7fa0659231668defadc107']
     """
-    return jsonify(mails)
+    return jsonify(MAILS)
 
 
 @app.route("/emails/<email_hash>")
@@ -112,6 +126,7 @@ def email_lines(email_hash):
           ['e3784d58de4458deb228303590605d82', '2eef2b4d6c7fa0659231668defadc107']
     """
     eml = []
+    session = Session()
     for header in session.query(Header).filter_by(messageid=email_hash).all():
       eml.append(header.headername + ": " + header.headervalue)
 
