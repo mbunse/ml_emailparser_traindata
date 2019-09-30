@@ -17,6 +17,8 @@ export default function LabeledMailLines(props) {
 
   const [data, setData] = useState([]);
 
+  const [linetypes, setLinetypes] = useState([])
+
   function handleChangeForLine(line) {
     return event => {
       setData(data.map((element, index) => {
@@ -37,11 +39,19 @@ export default function LabeledMailLines(props) {
 
   useEffect(() => {
     async function fetchData() {
+      let isSubscribed = true;
+      const result_annotations = await backend.get('/annotations');
+      if (isSubscribed) {
+        setLinetypes(result_annotations.data);
+      }
       const result = await backend.get('/emails/' + props.emailHash);
       let emailData = result.data.map((element, index) => {
-        return { linenumber: index, text: element, linetype: "irrelevant" };
+        return { linenumber: index, text: element.linetext, linetype: element.annotation };
       });
-      setData(emailData);
+      if (isSubscribed) {
+        setData(emailData);
+      }
+      return () => isSubscribed = false;
     }
     fetchData();
   }, [props]);
@@ -51,8 +61,8 @@ export default function LabeledMailLines(props) {
         <TableHead>
           <TableRow>
             <TableCell style={{ maxWidth: "5px", padding: "2px",}} align="center">Line</TableCell>
-            {props.linetypes.map(linetype => (
-              <TableCell style={{ width: "42px", padding: "2px", }} align="center">{linetype.name}</TableCell>
+            {linetypes.map(linetype => (
+              <TableCell key={linetype} style={{ width: "42px", padding: "2px", }} align="center">{linetype}</TableCell>
             ))}
             <TableCell>Line</TableCell>
           </TableRow>
@@ -61,16 +71,18 @@ export default function LabeledMailLines(props) {
           {data.map(n => (
             <TableRow key={n.linenumber} 
             className={classes.emailListEntry}>
-              <TableCell style={{ width: "5px", padding: "2px", }} className={classes.emailListEntry} align="center">
+              <TableCell key={n.linenumber} style={{ width: "5px", padding: "2px", }} className={classes.emailListEntry} align="center">
                 {n.linenumber}
               </TableCell>
-              {props.linetypes.map(linetype => (
-              <TableCell style={{ width: "42px", padding: "2px", }} className={classes.emailListEntry} align="center">
+              {linetypes.map(linetype => (
+              <TableCell key={`${n.linenumber}_${linetype}`} style={{ width: "42px", padding: "2px", }} className={classes.emailListEntry} align="center">
                 <Radio
-                  checked={n.linetype === linetype.value}
+                  // eslint-disable-next-line 
+                  checked={n.linetype == linetype}
                   onChange={handleChangeForLine(n.linenumber)}
-                  value={linetype.value}
-                  name={`${n.linenumber}_${linetype.value}`}
+                  value={linetype}
+                  name={`${n.linenumber}_${linetype}`}
+                  key={`${n.linenumber}_${linetype}`}
                 />
               </TableCell>
                 ))}
