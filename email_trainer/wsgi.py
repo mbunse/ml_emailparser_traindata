@@ -114,10 +114,9 @@ def email_lines(email_hash):
     for zoneline in (
       session.query(Zoneline)
         .options(
-          load_only("messageid", "linetext", "lineorder"),
+          load_only("messageid", "linetext", "lineorder", "id"),
           joinedload(Zoneline.zoneannotation)
             .subqueryload(Zoneannotation.zonetype)
-            .load_only("name"),
         )
         .filter_by(messageid=email_hash)
         .order_by(Zoneline.lineorder)
@@ -125,8 +124,10 @@ def email_lines(email_hash):
       eml.append(zoneline.linetext)
       lines_annotated.append({
         "annotation": zoneline.zoneannotation.zonetype.name, 
+        "annvalue": zoneline.zoneannotation.zonetype.id, 
         "linetext": zoneline.linetext,
         "lineorder": zoneline.lineorder,
+        "lineid": zoneline.id,
       })
     eml = "\n".join(eml)
     message = email.message_from_string(eml, policy=email.policy.default)
