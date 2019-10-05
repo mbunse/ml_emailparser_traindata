@@ -5,7 +5,7 @@ import glob
 import os
 from itertools import chain
 
-from flask import Flask, jsonify, abort, render_template
+from flask import Flask, jsonify, abort, render_template, request
 from flask_cors import CORS
 from flasgger import Swagger
 from werkzeug.exceptions import HTTPException
@@ -219,6 +219,17 @@ def update_email_line(email_hash):
       200:
         description: update OK
     """
+    session = Session()
+
+    for idx, annotation in enumerate(session.query(Zoneannotation)
+        .filter(
+          Zoneannotation.messageid == int(email_hash),
+          Zoneannotation.lineid.in_([req["lineid"] for req in request.json])
+        )
+      ):
+      annotation.annvalue=request.json[idx]["annvalue"]
+
+    session.commit()
     return "OK", 200
 
 def _extract_payload(email_message):
