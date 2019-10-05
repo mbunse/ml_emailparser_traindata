@@ -136,6 +136,9 @@ def email_lines(email_hash):
           lineid:
             type: integer
             example: 0
+          annotationid:
+            type: integer
+            example: 0
     responses:
       200:
         description: A list of emails
@@ -149,11 +152,13 @@ def email_lines(email_hash):
               lineid: 4157
               lineorder: 3
               linetext: "Dear Michael"
+              annotationid: 130
             - annotation: "Advertising Content"
               annvalue: 3
               lineid: 4162
               lineorder: 8
               linetext: "What Are the Hottest DVDs"
+              annotationid: 135
     """
     eml = []
     session = Session()
@@ -178,6 +183,7 @@ def email_lines(email_hash):
         "linetext": zoneline.linetext,
         "lineorder": zoneline.lineorder,
         "lineid": zoneline.id,
+        "annotationid": zoneline.zoneannotation.id
       })
     eml = "\n".join(eml)
     message = email.message_from_string(eml, policy=email.policy.default)
@@ -210,11 +216,13 @@ def update_email_line(email_hash):
             lineid: 4157
             lineorder: 3
             linetext: "Dear Michael"
+            annotationid: 130
           - annotation: "Advertising Content"
             annvalue: 3
             lineid: 4162
             lineorder: 8
             linetext: "What Are the Hottest DVDs"
+            annotationid: 135
     responses:
       200:
         description: update OK
@@ -223,8 +231,7 @@ def update_email_line(email_hash):
 
     for idx, annotation in enumerate(session.query(Zoneannotation)
         .filter(
-          Zoneannotation.messageid == int(email_hash),
-          Zoneannotation.lineid.in_([req["lineid"] for req in request.json])
+          Zoneannotation.id.in_([req["annotationid"] for req in request.json])
         )
       ):
       annotation.annvalue=request.json[idx]["annvalue"]
