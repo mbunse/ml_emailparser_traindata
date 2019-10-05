@@ -58,11 +58,32 @@ def annotations():
         schema:
           type: array
           items:
-            type: string
-        example: ['Signature Content', 'Author Content']
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+              name:
+                type: string
+                example: "Signature Content"
+          example: 
+            - id: 1
+              name: 'Signature Content'
+            - id: 2
+              name: 'Author Content'
     """
     session = Session()
-    annotation_names = list(chain(*session.query(Zonetype.name).all()))
+    annotation_names = []
+    for annotation_name in (session.query(Zonetype)
+                            .options(
+                              load_only("id", "name") 
+                            )
+                            .all()):
+      annotation_names.append({
+        "id": annotation_name.id,
+        "name": annotation_name.name,
+      })
+
     return jsonify(annotation_names)
 
 
@@ -96,14 +117,43 @@ def email_lines(email_hash):
           type: string
         example: '27321'
         default: '27321'
+    definitions:
+      Annotation:
+        type: object
+        properties:
+          annotation:
+            type: string
+            example: "Author Content"
+          annvalue:
+            type: integer
+            example: 0
+          linetext:
+            type: string
+            example: "Dear Sir/Madam"
+          lineorder:
+            type: integer
+            example: 0
+          lineid:
+            type: integer
+            example: 0
     responses:
       200:
         description: A list of emails
         schema:
           type: array
           items:
-            type: string
-          example: ['Dear Sir/Madam', '']
+            $ref: '#/definitions/Annotation'
+          example: 
+            - annotation: "Greeting Content"
+              annvalue: 4
+              lineid: 4157
+              lineorder: 3
+              linetext: "Dear Michael"
+            - annotation: "Advertising Content"
+              annvalue: 3
+              lineid: 4162
+              lineorder: 8
+              linetext: "What Are the Hottest DVDs"
     """
     eml = []
     session = Session()
@@ -153,10 +203,18 @@ def update_email_line(email_hash):
       schema:
         type: array
         items:
-          type: string
+          $ref: '#/definitions/Annotation'
         example:
-          - 'Dear Sir/Madam'
-          - ''
+          - annotation: "Greeting Content"
+            annvalue: 4
+            lineid: 4157
+            lineorder: 3
+            linetext: "Dear Michael"
+          - annotation: "Advertising Content"
+            annvalue: 3
+            lineid: 4162
+            lineorder: 8
+            linetext: "What Are the Hottest DVDs"
     responses:
       200:
         description: update OK
