@@ -304,7 +304,7 @@ def update_email_line(email_hash):
             Zoneannotation.id.in_(annotation_updates.keys())
           )
         ):
-        annotation.annvalue = annotation_updates[annotation.id]
+        annotation.annvalue = annotation_updates[annotation.id]["annvalue"]
 
       session.commit()
     except KeyError:
