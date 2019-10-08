@@ -11,7 +11,7 @@ from flasgger import Swagger
 from werkzeug.exceptions import HTTPException
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, joinedload, load_only
+from sqlalchemy.orm import sessionmaker, joinedload, load_only, noload
 
 from bs4 import BeautifulSoup
 import bs4.element
@@ -203,16 +203,22 @@ def email_lines(email_hash):
     session = Session()
 
     lines_annotated = []
-    for zoneline in (
-      session.query(Zoneline)
+    body = (session.query(Body)
         .options(
-          load_only("messageid", "linetext", "lineorder", "id"),
-          joinedload(Zoneline.zoneannotation)
+          joinedload(Body.subject_header),
+          joinedload(Body.date_header),
+          joinedload(Body.from_header),
+          joinedload(Body.to_header),
+          joinedload(Body.zoneannotations),
+          noload(Body.headers),
+          joinedload(Body.zonelines)
+            .subqueryload(Zoneline.zoneannotation)
             .subqueryload(Zoneannotation.zonetype)
         )
         .filter_by(messageid=email_hash)
-        .order_by(Zoneline.lineorder)
-        .all()):
+        .first())
+
+    for zoneline in body.zonelines:
 
       # try if zoneline has already conneted zoneannotation
       # otherwise AttributeError is raised
@@ -239,7 +245,6 @@ def email_lines(email_hash):
       for header in session.query(Header).filter_by(messageid=email_hash).all():
         eml.append(header.headername + ": " + header.headervalue)
 
-      body = session.query(Body).filter(Body.messageid == email_hash).first()
       eml.append(body.body)
       eml = "\n".join(eml)
       message = email.message_from_string(eml, policy=email.policy.default)
@@ -250,7 +255,14 @@ def email_lines(email_hash):
           "linetext": line_text,
           "lineorder": line_order,
         })
-    return jsonify(lines_annotated)
+
+    res = {
+      "subject": body.subject,
+      "date": body.date,
+      "lines_annotated": lines_annotated,
+    }
+
+    return jsonify(res)
 
 @app.route('/emails/<email_hash>', methods=['POST'])
 def update_email_line(email_hash):
@@ -264,8 +276,8 @@ def update_email_line(email_hash):
       required: true
       schema:
         type: string
-      example: '27321'
       default: '27321'
+      example: '27321'
     - name: Annotations
       in: body
       required: true
