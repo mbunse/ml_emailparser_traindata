@@ -40,11 +40,7 @@ def getMails():
       List of message ids
   """
 
-  session = Session()
-  mails = []
-  for messageid, in session.query(Zoneannotation.messageid).group_by(Zoneannotation.messageid)[1:20]:
-    mails.append(messageid)
-  return mails
+
 
 MAILS = getMails()
 
@@ -89,20 +85,64 @@ def annotations():
 
 @app.route('/emails')
 def emails():
-    """Endpoint returning a list of email hashes
-    ---
-    responses:
-      200:
-        description: A list of emails
-        schema:
-          type: array
-          items:
-            type: string
-            example: '27321'
-          example: 
-            - '27321'
-    """
-    return jsonify(MAILS)
+  """Endpoint returning a list of email hashes
+  ---
+  responses:
+    200:
+      description: A list of emails
+      schema:
+        type: array
+        items:
+          type: object
+          properties:
+            messageid:
+              type: integer
+            iszoneline:
+              type: boolean
+            hasannotation:
+              type: boolean
+            subject:
+              type: string
+            from:
+              type: string
+            to:
+              type: string
+            date:
+              type: string
+        example: 
+          - messageid: 27321
+            iszoneline: true
+            hasannotation: true
+            subject: 'Test'
+            from: 'email@test.com'
+            to: 'another_email@test.com'
+            date: '2012-12-23 04:02:21'
+  """
+  session = Session()
+  mails = []
+  for body in (session.query(Body)
+    .options(
+      load_only(
+        "messageid",
+        ),
+      joinedload(Body.subject_header),
+      joinedload(Body.date_header),
+      joinedload(Body.from_header),
+      joinedload(Body.to_header),
+      joinedload(Body.zoneannotations),
+      joinedload(Body.zonelines),
+    )
+    .group_by(Body.messageid).limit(20)):
+    mails.append({
+      "messageid": body.messageid,
+      "iszoneline": len(body.zonelines) > 0,
+      "hasannotation": len(body.zoneannotations) > 0,
+      "subject": body.subject,
+      "from": body.from_,
+      "to": body.to_,
+      "date": body.date,
+    })
+  return jsonify(mails)
 
 
 @app.route("/emails/<email_hash>", methods=['GET'])
@@ -160,10 +200,7 @@ def email_lines(email_hash):
               linetext: "What Are the Hottest DVDs"
               annotationid: 135
     """
-    eml = []
     session = Session()
-    for header in session.query(Header).filter_by(messageid=email_hash).all():
-      eml.append(header.headername + ": " + header.headervalue)
 
     lines_annotated = []
     for zoneline in (
@@ -176,24 +213,50 @@ def email_lines(email_hash):
         .filter_by(messageid=email_hash)
         .order_by(Zoneline.lineorder)
         .all()):
-      eml.append(zoneline.linetext)
-      lines_annotated.append({
-        "annotation": zoneline.zoneannotation.zonetype.name, 
-        "annvalue": zoneline.zoneannotation.zonetype.id, 
-        "linetext": zoneline.linetext,
-        "lineorder": zoneline.lineorder,
-        "lineid": zoneline.id,
-        "annotationid": zoneline.zoneannotation.id
-      })
-    eml = "\n".join(eml)
-    message = email.message_from_string(eml, policy=email.policy.default)
-    payload = _extract_payload(message)
-    payload = payload.replace("\r", "").split("\n")
+
+      # try if zoneline has already conneted zoneannotation
+      # otherwise AttributeError is raised
+      try:
+        lines_annotated.append({
+          "annotation": zoneline.zoneannotation.zonetype.name, 
+          "annvalue": zoneline.zoneannotation.zonetype.id, 
+          "linetext": zoneline.linetext,
+          "lineorder": zoneline.lineorder,
+          "lineid": zoneline.id,
+          "annotationid": zoneline.zoneannotation.id
+        })
+      except AttributeError:
+        lines_annotated.append({
+          "linetext": zoneline.linetext,
+          "lineorder": zoneline.lineorder,
+          "lineid": zoneline.id,
+        })
+    
+    # if no zonelines are found, zoneline dataset could be missing. Create is
+    # from body
+    if len(lines_annotated) == 0:
+      eml = []
+      for header in session.query(Header).filter_by(messageid=email_hash).all():
+        eml.append(header.headername + ": " + header.headervalue)
+
+      body = session.query(Body).filter(Body.messageid == email_hash).first()
+      eml.append(body.body)
+      eml = "\n".join(eml)
+      message = email.message_from_string(eml, policy=email.policy.default)
+      payload = _extract_payload(message)
+      payload = payload.replace("\r", "").split("\n")
+      for line_order, line_text in enumerate(payload):
+        lines_annotated.append({
+          "linetext": line_text,
+          "lineorder": line_order,
+        })
     return jsonify(lines_annotated)
 
 @app.route('/emails/<email_hash>', methods=['POST'])
 def update_email_line(email_hash):
     """Endpoint updating a list of email hashes
+    If annotation id is given, existin zone annotations are updated.
+    If otherwise lineid is given, zone annotations are created for exisiting zone lines.
     ---
     parameters:
     - name: email_hash
@@ -229,14 +292,37 @@ def update_email_line(email_hash):
     """
     session = Session()
 
-    for idx, annotation in enumerate(session.query(Zoneannotation)
-        .filter(
-          Zoneannotation.id.in_([req["annotationid"] for req in request.json])
-        )
-      ):
-      annotation.annvalue=request.json[idx]["annvalue"]
+    try:
+      # If annotation id is given, update existing annotation ids
+      annotation_updates = {}
+      for req in request.json:
+        annotation_updates[req.pop("annotationid", None)] = req
 
-    session.commit()
+      for annotation in (session.query(Zoneannotation)
+          .filter(
+            Zoneannotation.messageid == email_hash,
+            Zoneannotation.id.in_(annotation_updates.keys())
+          )
+        ):
+        annotation.annvalue = annotation_updates[annotation.id]
+
+      session.commit()
+    except KeyError:
+      annotations_creations = {}
+      for req in request.json:
+        annotations_creations[req.pop("lineid", None)] = req
+      for line in (session.query(Zoneline)
+          .filter(
+            Zoneline.messageid == email_hash,
+            Zoneline.id.in_(annotations_creations.keys()),
+          )
+        ):
+        zoneannotation = Zoneannotation()
+        zoneannotation.annvalue = annotations_creations[line.id]
+        zoneannotation.messageid = email_hash
+        zoneannotation.lineid = line.id
+        session.add(zoneannotation)
+      session.commit()
     return "OK", 200
 
 def _extract_payload(email_message):
