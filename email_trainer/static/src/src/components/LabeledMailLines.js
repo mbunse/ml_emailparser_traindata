@@ -8,8 +8,8 @@ import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import Paper from '@material-ui/core/Paper';
 import Radio from '@material-ui/core/Radio';
-import backend from './backend';
-import { useStyles } from './pages/Dashboard';
+import backend from '../backend';
+import { useStyles } from '../layouts/BaseLayout';
 
 export default function LabeledMailLines(props) {
 

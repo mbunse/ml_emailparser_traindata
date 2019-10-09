@@ -6,8 +6,8 @@ import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import Avatar from '@material-ui/core/Avatar';
 import Fab from '@material-ui/core/Fab';
 import AddIcon from '@material-ui/icons/Add';
-import backend from './backend';
-import { useStyles } from './pages/Dashboard';
+import backend from '../backend';
+import { useStyles } from '../layouts/BaseLayout';
 
 export default function ListTrainingMails(props) {
 

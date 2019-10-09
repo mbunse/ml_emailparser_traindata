@@ -1,12 +1,16 @@
 import React from 'react';
 import Typography from '@material-ui/core/Typography';
-import { useStyles } from '../pages/Dashboard';
-import LabeledMailLines from '../LabeledMailLines';
+import { useStyles } from '../layouts/BaseLayout';
+import LabeledMailLines from '../components/LabeledMailLines';
+import DashboardFrame from '../components/DashboardFrame';
 
 export default function LabelEmail({ match }) {
     const classes = useStyles();
 
     return (
+        <React.Fragment>
+        <DashboardFrame title="Emails"></DashboardFrame>
+  
         <main className={classes.content}>
             <div className={classes.appBarSpacer} />
             <Typography variant="h4" gutterBottom component="h2">
@@ -21,5 +25,6 @@ export default function LabelEmail({ match }) {
 
                 ]}/>
             </div>
-        </main>);
+        </main>
+        </React.Fragment>);
 }

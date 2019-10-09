@@ -5,7 +5,7 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import DashboardIcon from '@material-ui/icons/List';
 
-function MenuListItems(props) {
+function MenuList(props) {
   return (
     <div>
         <ListItem button component={Link} to="/" 
@@ -20,4 +20,4 @@ function MenuListItems(props) {
   )
 };
 
-export default withRouter(MenuListItems);
+export default withRouter(MenuList);
