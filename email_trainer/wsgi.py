@@ -74,6 +74,7 @@ def annotations():
                             .options(
                               load_only("id", "name") 
                             )
+                            .order_by(Zonetype.id)
                             .all()):
       annotation_names.append({
         "id": annotation_name.id,
