@@ -80,7 +80,7 @@ def annotations():
         "id": annotation_name.id,
         "name": annotation_name.name,
       })
-
+    session.close()
     return jsonify(annotation_names)
 
 
@@ -145,6 +145,7 @@ def emails():
       "to": body.to_,
       "date": body.date,
     })
+  session.close()
   return jsonify(mails)
 
 
@@ -264,7 +265,7 @@ def email_lines(email_hash):
       "date": body.date,
       "lines_annotated": lines_annotated,
     }
-
+    session.close()
     return jsonify(res)
 
 @app.route('/emails/<email_hash>', methods=['POST'])
@@ -307,37 +308,34 @@ def update_email_line(email_hash):
     """
     session = Session()
 
-    try:
-      # If annotation id is given, update existing annotation ids
-      annotation_updates = {}
-      for req in request.json:
-        annotation_updates[req.pop("annotationid", None)] = req
+    for annotation_update in request.json:
+      # if annotation exists, update it
+      if "annotationid" in annotation_update.keys():
+        annotation = (session.query(Zoneannotation)
+          .get(annotation_update["annotationid"]))
+        annotation.annvalue = annotation_update["annvalue"]
 
-      for annotation in (session.query(Zoneannotation)
-          .filter(
-            Zoneannotation.messageid == email_hash,
-            Zoneannotation.id.in_(annotation_updates.keys())
-          )
-        ):
-        annotation.annvalue = annotation_updates[annotation.id]["annvalue"]
+      # else create new one
+      else:
+        annotation = Zoneannotation()
+        annotation.annvalue = annotation_update["annvalue"]
+        annotation.messageid = email_hash
 
-      session.commit()
-    except KeyError:
-      annotations_creations = {}
-      for req in request.json:
-        annotations_creations[req.pop("lineid", None)] = req
-      for line in (session.query(Zoneline)
-          .filter(
-            Zoneline.messageid == email_hash,
-            Zoneline.id.in_(annotations_creations.keys()),
-          )
-        ):
-        zoneannotation = Zoneannotation()
-        zoneannotation.annvalue = annotations_creations[line.id]
-        zoneannotation.messageid = email_hash
-        zoneannotation.lineid = line.id
-        session.add(zoneannotation)
-      session.commit()
+        # if zoneline exists, map it to annotation
+        if "lineid" in annotation_update.keys():
+          zoneline = session.query(Zoneline).get(annotation_update["lineid"])
+          annotation.zoneline = zoneline
+
+        # else create zoneline  
+        else:
+          zoneline = Zoneline()
+          zoneline.linetext = annotation_update["linetext"]
+          zoneline.lineorder = annotation_update["lineorder"]
+          zoneline.messageid = email_hash
+          annotation.zoneline = zoneline
+    
+    session.commit()
+    session.close()
     return "OK", 200
 
 def _extract_payload(email_message):
