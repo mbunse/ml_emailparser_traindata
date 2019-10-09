@@ -132,7 +132,9 @@ def emails():
       joinedload(Body.zoneannotations),
       joinedload(Body.zonelines),
     )
-    .group_by(Body.messageid).limit(20)):
+    .group_by(Body.messageid)
+    .order_by(Body.messageid)
+    .limit(20)):
     mails.append({
       "messageid": body.messageid,
       "iszoneline": len(body.zonelines) > 0,
