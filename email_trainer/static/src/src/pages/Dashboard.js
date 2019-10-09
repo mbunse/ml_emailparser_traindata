@@ -17,7 +17,7 @@ import NotificationsIcon from '@material-ui/icons/Notifications';
 import MenuListItems from '../MenuList';
 import EmailList from '../sites/EmailList';
 import LabelEmail from '../sites/LabelEmail';
-
+import {green, red, yellow} from '@material-ui/core/colors';
 const drawerWidth = 240;
 
 export const useStyles = makeStyles(theme => ({
@@ -99,6 +99,15 @@ export const useStyles = makeStyles(theme => ({
     height: theme.spacing(1),
     margin: theme.spacing(1),
     padding: theme.spacing(0),
+  },
+  yellowAvatar: {
+    backgroundColor: yellow[500],
+  },
+  redAvatar: {
+    backgroundColor: red[500],
+  },
+  greenAvatar: {
+    backgroundColor: green[500]
   }
 }));
 

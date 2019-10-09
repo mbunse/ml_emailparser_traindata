@@ -17,17 +17,31 @@ export default function LabeledMailLines(props) {
 
   const [data, setData] = useState([]);
 
+  const [email, setEmail] = useState({
+    subject: '',
+    date: ''
+  })
+
   const [linetypes, setLinetypes] = useState([])
 
+  function getLinetypeForId(id) {
+    let linetype = linetypes.find(element => {
+      return element.id === Number(id)
+    })
+    if (linetype === undefined) {
+      return undefined;
+    }
+    else {
+      return linetype.name;
+    }
+  }
   function handleChangeForLine(line) {
     return event => {
       setData(data.map((element, index) => {
         if (index === line) {
-          return {
-            linenumber: element.linenumber,
-            text: element.text,
-            linetype: event.target.value
-          };
+          element.annvalue = event.target.value;
+          element.linetype = getLinetypeForId(event.target.value);
+          return element;
         }
         else {
           return element;
@@ -45,56 +59,63 @@ export default function LabeledMailLines(props) {
         setLinetypes(result_annotations.data);
       }
       const result = await backend.get('/emails/' + props.emailHash);
-      let emailData = result.data.map((element, index) => {
-        return { linenumber: index, text: element.linetext, linetype: element.annotation };
+      let emailData = result.data.lines_annotated.map((element, index) => {
+        element.linenumber = index 
+        return element;
       });
       if (isSubscribed) {
         setData(emailData);
+        setEmail({
+          date: result.data.date,
+          subject: result.data.subject
+        })
       }
       return () => isSubscribed = false;
     }
     fetchData();
   }, [props]);
   return (
+    <div>      {email.subject}
     <Paper className={classes.root}>
       <Table className={classes.table} size="small">
         <TableHead>
           <TableRow>
-            <TableCell style={{ maxWidth: "5px", padding: "2px",}} align="center">Line</TableCell>
+            <TableCell style={{ maxWidth: "5px", padding: "2px", }} align="center">Line</TableCell>
             {linetypes.map(linetype => (
-              <TableCell key={linetype} style={{ width: "42px", padding: "2px", }} align="center">{linetype}</TableCell>
+              <TableCell key={linetype.id} style={{ width: "42px", padding: "2px", }} align="center">{linetype.name}</TableCell>
             ))}
             <TableCell>Line</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {data.map(n => (
-            <TableRow key={n.linenumber} 
-            className={classes.emailListEntry}>
-              <TableCell key={n.linenumber} style={{ width: "5px", padding: "2px", }} className={classes.emailListEntry} align="center">
-                {n.linenumber}
+          {data.map(line => (
+            <TableRow key={line.linenumber}
+              className={classes.emailListEntry}>
+              <TableCell key={line.linenumber} style={{ width: "5px", padding: "2px", }} className={classes.emailListEntry} align="center">
+                {line.linenumber}
               </TableCell>
               {linetypes.map(linetype => (
-              <TableCell key={`${n.linenumber}_${linetype}`} style={{ width: "42px", padding: "2px", }} className={classes.emailListEntry} align="center">
-                <Radio
-                  // eslint-disable-next-line 
-                  checked={n.linetype == linetype}
-                  onChange={handleChangeForLine(n.linenumber)}
-                  value={linetype}
-                  name={`${n.linenumber}_${linetype}`}
-                  key={`${n.linenumber}_${linetype}`}
-                />
-              </TableCell>
-                ))}
+                <TableCell key={`${line.linenumber}_${linetype.id}`} style={{ width: "42px", padding: "2px", }} className={classes.emailListEntry} align="center">
+                  <Radio
+                    // eslint-disable-next-line 
+                    checked={line.annvalue == linetype.id}
+                    onChange={handleChangeForLine(line.linenumber)}
+                    value={linetype.id}
+                    name={`${line.linenumber}_${linetype.id}_${line.annvalue}`}
+                    key={`${line.linenumber}_${linetype.id}`}
+                  />
+                </TableCell>
+              ))}
               <TableCell align="left" className={classes.emailListEntry} >
-              <Typography component="div">
-              <Box fontFamily="Monospace">{n.text}</Box>
-              </Typography>
+                <Typography component="div">
+                  <Box fontFamily="Monospace">{line.linetext}</Box>
+                </Typography>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </Paper>
+    </div>
   );
 }
