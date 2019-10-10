@@ -30,5 +30,17 @@ mysql> create user 'emailparser_dev'@'localhost' identified by 'password';
 mysql> grant all on zonerelease.* to 'emailparser_dev'@'localhost';
 
 mysql> select CONCAT_WS('\n', GROUP_CONCAT(CONCAT_WS(' ', CONCAT(headername, ':'), headervalue) SEPARATOR '\n'), body) from bodies left join headers on bodies.messageid = headers.messageid where bodies.messageid=1;
+# Set primary keys
+mysql> alter table zonelines add primary key(id);
+mysql> alter table zonelines change id id int(10) unsigned NOT NULL AUTO_INCREMENT;
+mysql> alter table zoneannotations CHANGE `datetime` `datetime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+mysql> alter table zoneannotations add primary key(id);
+mysql> alter table zoneannotations change id id int(10) unsigned NOT NULL AUTO_INCREMENT;
+mysql> alter table zonetypes add primary key(id);
+
+# Attention: there are duplicate id's in the errortypes table for 'x8';
+mysql> delete from errortypes where name like '%HTML Content%';
+mysql> update errortypes set name='Spam Message or HTML Content' where id='x8';
+mysql> alter table errortypes add primary key(id);
 
 ```
