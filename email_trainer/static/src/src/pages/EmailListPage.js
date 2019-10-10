@@ -1,8 +1,9 @@
 import React from 'react';
 import { Typography } from '@material-ui/core';
-import { useStyles } from '../layouts/BaseLayout';
 import DashboardFrame from '../components/DashboardFrame';
 import ListTrainingMails from '../components/ListTrainingMails';
+import { useStyles } from '../layouts/BaseLayout';
+
 export default function EmailListPage() {
   const classes = useStyles();
 

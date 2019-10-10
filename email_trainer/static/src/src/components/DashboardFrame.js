@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import clsx from 'clsx';
 import {
   Drawer, AppBar, Toolbar, List, Typography,
-  Divider, IconButton, Badge
+  Divider, IconButton
 } from '@material-ui/core';
 import {
-  Menu as MenuIcon, Notifications as NotificationsIcon,
+  Menu as MenuIcon, 
   ChevronLeft as ChevronLeftIcon
 } from '@material-ui/icons';
 import MenuList from './MenuList';
@@ -57,11 +57,7 @@ export default function DashboardFrame(props) {
             {props.title}
           </Typography>
           <div>
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
+            {props.appbarItems}
           </div>
         </Toolbar>
       </AppBar>
