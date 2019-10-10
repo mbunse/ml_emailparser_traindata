@@ -4,6 +4,7 @@ from quopri import decodestring
 import glob
 import os
 from itertools import chain
+from datetime import datetime
 
 from flask import Flask, jsonify, abort, render_template, request
 from flask_cors import CORS
@@ -314,17 +315,21 @@ def update_email_line(email_hash):
         annotation = (session.query(Zoneannotation)
           .get(annotation_update["annotationid"]))
         annotation.annvalue = annotation_update["annvalue"]
+        session.merge(annotation)
 
       # else create new one
       else:
         annotation = Zoneannotation()
+        annotation.userid = 0
+        annotation.datetime = datetime.now()
+        annotation.errorid = 0
         annotation.annvalue = annotation_update["annvalue"]
         annotation.messageid = email_hash
 
         # if zoneline exists, map it to annotation
         if "lineid" in annotation_update.keys():
           zoneline = session.query(Zoneline).get(annotation_update["lineid"])
-          annotation.zoneline = zoneline
+          annotation.lineid = zoneline.id
 
         # else create zoneline  
         else:
@@ -332,9 +337,13 @@ def update_email_line(email_hash):
           zoneline.linetext = annotation_update["linetext"]
           zoneline.lineorder = annotation_update["lineorder"]
           zoneline.messageid = email_hash
-          annotation.zoneline = zoneline
-    
-    session.commit()
+          session.add(zoneline)
+          session.flush()
+
+          annotation.lineid = zoneline.id
+        session.add(annotation)
+      session.commit()
+
     session.close()
     return "OK", 200
 
