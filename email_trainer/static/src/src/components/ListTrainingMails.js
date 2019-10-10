@@ -36,7 +36,7 @@ export default function ListTrainingMails(props) {
           secondary={email.from + " " + email.iszoneline}/>
         </ListItem>
       ))}
-      <Fab color="primary" aria-label="add">
+      <Fab color="primary" aria-label="add" className={classes.fab}>
         <AddIcon />
       </Fab>
     </div>

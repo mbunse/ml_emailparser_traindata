@@ -90,5 +90,10 @@ export default theme => ({
     },
     greenAvatar: {
         backgroundColor: green[500]
-    }
+    },
+    fab: {
+        position: 'absolute',
+        bottom: theme.spacing(2),
+        right: theme.spacing(2),
+    },
 });
