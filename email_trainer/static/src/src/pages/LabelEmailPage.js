@@ -36,8 +36,8 @@ export default function LabelEmailPage() {
     
     function handleChangeForLine(line) {
         return event => {
-          setAnnotationLines(annotationLines.map((element, index) => {
-            if (index === line) {
+          setAnnotationLines(annotationLines.map((element) => {
+            if (element.lineorder === line) {
               element.annvalue = Number(event.target.value);
               element.linetype = getLinetypeForId(event.target.value);
               return element;
