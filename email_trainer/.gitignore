@@ -1,5 +1,7 @@
 data/*
 !data/Database_Import.md
+!data/fix_primkeys.sql
+!data/setup_db.sh
 secrets.py
 # static files build with npm
 static/*.*
