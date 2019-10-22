@@ -7,7 +7,7 @@ python3.7 -c 'import os; print(f"PASSWORD = \"{os.urandom(12).hex()}\"")' > emai
 
 ## Setup db
 
-Import of enron emails takes approx. 4h!
+Import of enron emails takes approx. 1h up to 4h.
 
 ```
 source setup_db.sh

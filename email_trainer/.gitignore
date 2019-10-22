@@ -6,3 +6,5 @@ secrets.py
 # static files build with npm
 static/*.*
 static/static
+templates/*
+!templates/.gitkeep
